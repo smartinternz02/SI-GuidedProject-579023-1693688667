@@ -1,0 +1,95 @@
+import numpy as np
+import pandas as pd
+from sklearn.cluster import KMeans
+from sklearn.model_selection import train_test_split
+from sklearn.linear_model import LinearRegression
+import matplotlib.pyplot as plt
+from sklearn.preprocessing import StandardScaler
+
+scaler = StandardScaler()
+
+data = pd.read_csv("Automobile.csv")
+X = data.iloc[:, 1:-2]
+columns = X.columns
+comparison_labels = [ "Good", "Average", "Bad"]
+colors = ["green", "blue", "red"]
+
+X = X.fillna(X["horsepower"].mean())
+X["weight"] = 1 / X["weight"]
+
+kmeans = KMeans(n_clusters=3, random_state=0, init="k-means++")
+result = kmeans.fit_predict(X)
+
+for i in range(len(list(result))):
+  print(f" {data.iloc[i, 5]} : {comparison_labels[result[i]]}")
+kmeans_count = {}
+for i in range(len(comparison_labels)):
+  print(f"{comparison_labels[i]} Cars : {list(result).count(i)}")
+  kmeans_count[comparison_labels[i] + " Cars"] = list(result).count(i)
+print(kmeans_count)
+plt.bar(list(kmeans_count.keys()), list(kmeans_count.values()), color=colors)
+plt.title("Composition of Cars (K Means)")
+plt.xlabel("Types of Cars")
+plt.ylabel("Count")
+plt.show()
+for i in range(len(X)):
+    plt.scatter(X.iloc[i, 0], data.iloc[i, 5], s = 100, c = colors[result[i]])
+leg = plt.legend(labels=comparison_labels)
+for i, j in enumerate(leg.legend_handles):
+    j.set_color(colors[i])
+
+plt.title('MPG Vs Weight (K Means)')
+plt.xlabel('Miles per Gallon')
+plt.ylabel('Weight')
+plt.show()
+for i in range(len(X)):
+    plt.scatter(X.iloc[i, 0], X.iloc[i, 5], s = 100, c = colors[result[i]])
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 5], s = 300, c = 'yellow', label = 'Centroids')
+leg = plt.legend(labels=comparison_labels)
+for i, j in enumerate(leg.legend_handles):
+    j.set_color(colors[i])
+
+plt.title('MPG Vs Acceleration (K Means)')
+plt.xlabel('Miles per Gallon')
+plt.ylabel('Acceleration')
+plt.show()
+for i in range(len(X)):
+    plt.scatter(X.iloc[i, 0], X.iloc[i, 3], s = 100, c = colors[result[i]])
+plt.scatter(kmeans.cluster_centers_[:, 0], kmeans.cluster_centers_[:, 3], s = 300, c = 'yellow', label = 'Centroids')
+plt.title('MPG Vs Horse Power(K Means)')
+plt.xlabel('Miles per Gallon')
+plt.ylabel('Horsepower')
+leg = plt.legend(labels=comparison_labels)
+for i, j in enumerate(leg.legend_handles):
+    j.set_color(colors[i])
+plt.show()
+import scipy.cluster.hierarchy as sch
+dendrogram = sch.dendrogram(sch.linkage(X, method = 'ward'))
+plt.title('Dendrogram')
+plt.xlabel('Cars')
+plt.ylabel('Euclidean distances')
+plt.show()
+from sklearn.cluster import AgglomerativeClustering
+hc = AgglomerativeClustering(n_clusters = 3, metric = 'euclidean', linkage = 'ward')
+y_hc = hc.fit_predict(X)
+aglo_count = {}
+
+for i in range(len(comparison_labels)):
+  print(f"{comparison_labels[i]} Cars : {list(y_hc).count(i)}")
+  aglo_count[comparison_labels[i] + " Cars"] = list(y_hc).count(i)
+
+print(aglo_count)
+plt.bar(list(aglo_count.keys()), list(aglo_count.values()), color=colors)
+plt.title("Composition of Cars (Agglomerative)")
+plt.xlabel("Types of Cars")
+plt.ylabel("Count")
+plt.show()
+for i in range(len(X)):
+    plt.scatter(X.iloc[i, 0], X.iloc[i, 3], s = 100, c = colors[y_hc[i]])
+plt.title('MPG Vs Horse Power (Agglomerative)')
+plt.xlabel('Miles per Gallon')
+plt.ylabel('Horsepower')
+leg = plt.legend(labels=comparison_labels)
+for i, j in enumerate(leg.legend_handles):
+    j.set_color(colors[i])
+plt.show()
